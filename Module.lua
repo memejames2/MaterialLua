@@ -1,49 +1,4 @@
-local UserInputService = game:GetService("UserInputService")
-
-local function makeDraggable(guiObject)
-    local dragging = false
-    local dragInput, mousePos, framePos
-
-    local function update(input)
-        local delta = input.Position - mousePos
-        guiObject.Position = UDim2.new(
-            framePos.X.Scale,
-            framePos.X.Offset + delta.X,
-            framePos.Y.Scale,
-            framePos.Y.Offset + delta.Y
-        )
-    end
-
-    guiObject.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            mousePos = input.Position
-            framePos = guiObject.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    guiObject.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
-        end
-    end)
-end
-
--- Example usage: make a specific UI element draggable
-local myGuiElement = TitleBar
-makeDraggable(myGuiElement)
+local Player = game:GetService("Players").LocalPlayer
 local Mouse = Player:GetMouse()
 
 local TextService = game:GetService("TextService")
@@ -355,15 +310,10 @@ function Objects.new(Type)
 end
 
 local function GetXY(GuiObject)
-	local Max = math.max(GuiObject.AbsoluteSize.X, 1) -- Ensures Max is at least 1
-	local May = math.max(GuiObject.AbsoluteSize.Y, 1) -- Ensures May is at least 1
-
-	local Px = math.clamp(Mouse.X - GuiObject.AbsolutePosition.X, 0, Max)
-	local Py = math.clamp(Mouse.Y - GuiObject.AbsolutePosition.Y, 0, May)
-	
-	return Px / Max, Py / May
+	local Max, May = GuiObject.AbsoluteSize.X, GuiObject.AbsoluteSize.Y
+	local Px, Py = math.clamp(Mouse.X - GuiObject.AbsolutePosition.X, 0, Max), math.clamp(Mouse.Y - GuiObject.AbsolutePosition.Y, 0, May)
+	return Px/Max, Py/May
 end
-
 
 local function CircleAnim(GuiObject, EndColour, StartColour)
 	local PX, PY = GetXY(GuiObject)
@@ -842,32 +792,23 @@ function Material.Load(Config)
 	TitleText.Font = Enum.Font.GothamBold
 	TitleText.Parent = TitleBar
 
-	TitleText.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		-- Capture initial position
-		local startPos = input.Position
-		local guiStartPos = MainFrame.Position
-		local dragInput = input
-
-		-- Track dragging movement
-		local dragging
-		dragging = UserInputService.InputChanged:Connect(function(moveInput)
-			if moveInput == dragInput then
-				local delta = moveInput.Position - startPos
-				MainFrame.Position = guiStartPos + UDim2.fromOffset(delta.X, delta.Y)
+	TitleText.MouseButton1Down:Connect(function()
+		local Mx, My = Mouse.X, Mouse.Y
+		local MouseMove, MouseKill
+		MouseMove = Mouse.Move:Connect(function()
+			local nMx, nMy = Mouse.X, Mouse.Y
+			local Dx, Dy = nMx - Mx, nMy - My
+			MainFrame.Position = MainFrame.Position + UDim2.fromOffset(Dx, Dy)
+			Mx, My = nMx, nMy
+		end)
+		MouseKill = InputService.InputEnded:Connect(function(UserInput)
+			if UserInput.UserInputType == Enum.UserInputType.MouseButton1 then
+				MouseMove:Disconnect()
+				MouseKill:Disconnect()
 			end
 		end)
+	end)
 
-		-- End dragging on release
-		local dragEnd
-		dragEnd = UserInputService.InputEnded:Connect(function(endInput)
-			if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
-				dragging:Disconnect()
-				dragEnd:Disconnect()
-			end
-		end)
-	end
-end)
 	local MinimiseButton = Objects.new("SmoothButton")
 	MinimiseButton.Size = UDim2.fromOffset(20,20)
 	MinimiseButton.Position = UDim2.fromScale(1,0) + UDim2.fromOffset(-25,5)

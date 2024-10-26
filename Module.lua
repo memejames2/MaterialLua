@@ -797,10 +797,10 @@ function Material.Load(Config)
 		-- Capture initial position
 		local startPos = input.Position
 		local guiStartPos = MainFrame.Position
+		local dragInput = input
 
-		local dragging, dragInput
-
-		-- Start tracking movement
+		-- Track dragging movement
+		local dragging
 		dragging = UserInputService.InputChanged:Connect(function(moveInput)
 			if moveInput == dragInput then
 				local delta = moveInput.Position - startPos
@@ -808,7 +808,7 @@ function Material.Load(Config)
 			end
 		end)
 
-		-- End dragging when touch or mouse is released
+		-- End dragging on release
 		local dragEnd
 		dragEnd = UserInputService.InputEnded:Connect(function(endInput)
 			if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
@@ -816,11 +816,6 @@ function Material.Load(Config)
 				dragEnd:Disconnect()
 			end
 		end)
-
-		-- Set the drag input as the one that started the dragging
-		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
-			dragInput = input
-		end
 	end
 end)
 	local MinimiseButton = Objects.new("SmoothButton")

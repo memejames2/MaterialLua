@@ -792,23 +792,37 @@ function Material.Load(Config)
 	TitleText.Font = Enum.Font.GothamBold
 	TitleText.Parent = TitleBar
 
-	TitleText.MouseButton1Down:Connect(function()
-		local Mx, My = Mouse.X, Mouse.Y
-		local MouseMove, MouseKill
-		MouseMove = Mouse.Move:Connect(function()
-			local nMx, nMy = Mouse.X, Mouse.Y
-			local Dx, Dy = nMx - Mx, nMy - My
-			MainFrame.Position = MainFrame.Position + UDim2.fromOffset(Dx, Dy)
-			Mx, My = nMx, nMy
-		end)
-		MouseKill = InputService.InputEnded:Connect(function(UserInput)
-			if UserInput.UserInputType == Enum.UserInputType.MouseButton1 then
-				MouseMove:Disconnect()
-				MouseKill:Disconnect()
+	TitleText.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		-- Capture initial position
+		local startPos = input.Position
+		local guiStartPos = MainFrame.Position
+
+		local dragging, dragInput
+
+		-- Start tracking movement
+		dragging = UserInputService.InputChanged:Connect(function(moveInput)
+			if moveInput == dragInput then
+				local delta = moveInput.Position - startPos
+				MainFrame.Position = guiStartPos + UDim2.fromOffset(delta.X, delta.Y)
 			end
 		end)
-	end)
 
+		-- End dragging when touch or mouse is released
+		local dragEnd
+		dragEnd = UserInputService.InputEnded:Connect(function(endInput)
+			if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
+				dragging:Disconnect()
+				dragEnd:Disconnect()
+			end
+		end)
+
+		-- Set the drag input as the one that started the dragging
+		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end
+end)
 	local MinimiseButton = Objects.new("SmoothButton")
 	MinimiseButton.Size = UDim2.fromOffset(20,20)
 	MinimiseButton.Position = UDim2.fromScale(1,0) + UDim2.fromOffset(-25,5)

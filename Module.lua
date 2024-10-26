@@ -310,10 +310,15 @@ function Objects.new(Type)
 end
 
 local function GetXY(GuiObject)
-	local Max, May = GuiObject.AbsoluteSize.X, GuiObject.AbsoluteSize.Y
-	local Px, Py = math.clamp(Mouse.X - GuiObject.AbsolutePosition.X, 0, Max), math.clamp(Mouse.Y - GuiObject.AbsolutePosition.Y, 0, May)
-	return Px/Max, Py/May
+	local Max = math.max(GuiObject.AbsoluteSize.X, 1) -- Ensures Max is at least 1
+	local May = math.max(GuiObject.AbsoluteSize.Y, 1) -- Ensures May is at least 1
+
+	local Px = math.clamp(Mouse.X - GuiObject.AbsolutePosition.X, 0, Max)
+	local Py = math.clamp(Mouse.Y - GuiObject.AbsolutePosition.Y, 0, May)
+	
+	return Px / Max, Py / May
 end
+
 
 local function CircleAnim(GuiObject, EndColour, StartColour)
 	local PX, PY = GetXY(GuiObject)
